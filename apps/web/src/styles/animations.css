@@ -1,0 +1,568 @@
+/* ── Professional Animations for Trader Vaults UI ─────────────────────────────
+ * Modern, performant CSS animations that enhance the user experience
+ * without overwhelming the design system's brutalist aesthetic.
+ */
+
+/* ── Animation Keyframes ──────────────────────────────────────────── */
+
+/* Fade animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInLeft {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeInRight {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Slide animations */
+@keyframes slideInUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideInDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Scale animations */
+@keyframes scaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes scaleOut {
+  from { transform: scale(1); opacity: 1; }
+  to { transform: scale(0.95); opacity: 0; }
+}
+
+/* Pulse and heartbeat */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.1); }
+  50% { transform: scale(1); }
+  75% { transform: scale(1.1); }
+}
+
+/* Shimmer and loading */
+@keyframes shimmer {
+  from { background-position: -400px 0; }
+  to { background-position: 400px 0; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Specialized animations */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(14, 165, 233, 0.3); }
+  50% { box-shadow: 0 0 30px rgba(14, 165, 233, 0.5); }
+}
+
+@keyframes slide-from-bottom {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes number-count {
+  from { transform: translateY(0); }
+  to { transform: translateY(-100%); }
+}
+
+/* Table row animations */
+@keyframes row-enter {
+  from { 
+    transform: translateX(-10px); 
+    opacity: 0;
+  }
+  to { 
+    transform: translateX(0); 
+    opacity: 1;
+  }
+}
+
+@keyframes row-update {
+  0% { background: rgba(14, 165, 233, 0.1); }
+  100% { background: transparent; }
+}
+
+/* Card hover animations */
+@keyframes card-hover {
+  from { transform: translateY(0); }
+  to { transform: translateY(-4px); }
+}
+
+@keyframes card-glow {
+  from { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+  to { box-shadow: 0 20px 25px -5px rgba(14, 165, 233, 0.3); }
+}
+
+/* Status indicator animations */
+@keyframes status-active {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+@keyframes status-warning {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Loading skeleton */
+@keyframes skeleton-shimmer {
+  from { background-position: -800px 0; }
+  to { background-position: 800px 0; }
+}
+
+/* Progress indicator */
+@keyframes progress-pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+/* Notification animations */
+@keyframes notification-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes notification-out {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0; }
+}
+
+/* Tooltip animations */
+@keyframes tooltip-in {
+  from { opacity: 0; transform: translateY(4px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes tooltip-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(4px) scale(0.95); }
+}
+
+/* ── Animation Utility Classes ────────────────────────────────────── */
+
+/* Fade animations */
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.animate-fade-in-down {
+  animation: fadeInDown 0.3s ease-out;
+}
+
+.animate-fade-in-left {
+  animation: fadeInLeft 0.3s ease-out;
+}
+
+.animate-fade-in-right {
+  animation: fadeInRight 0.3s ease-out;
+}
+
+/* Slide animations */
+.animate-slide-in-up {
+  animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-slide-in-down {
+  animation: slideInDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Scale animations */
+.animate-scale-in {
+  animation: scaleIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.animate-scale-out {
+  animation: scaleOut 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Pulse and special effects */
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-heartbeat {
+  animation: heartbeat 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 1.5s linear infinite;
+  background: linear-gradient(90deg, 
+    var(--panel-2) 25%, 
+    var(--panel-3) 50%, 
+    var(--panel-2) 75%
+  );
+  background-size: 400% 100%;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-bounce {
+  animation: bounce 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+}
+
+/* Status animations */
+.animate-status-active {
+  animation: status-active 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-status-warning {
+  animation: status-warning 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ── Duration Modifiers ──────────────────────────────────────────── */
+
+.duration-instant { animation-duration: 0.1s; }
+.duration-fast { animation-duration: 0.15s; }
+.duration-normal { animation-duration: 0.2s; }
+.duration-slow { animation-duration: 0.3s; }
+.duration-slower { animation-duration: 0.4s; }
+.duration-slower-still { animation-duration: 0.5s; }
+
+/* ── Easing Modifiers ───────────────────────────────────────────── */
+
+.ease-linear { animation-timing-function: linear; }
+.ease-in { animation-timing-function: cubic-bezier(0.4, 0, 1, 1); }
+.ease-out { animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+.ease-in-out { animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
+.ease-spring { animation-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.ease-smooth { animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+
+/* ── Delay Modifiers ────────────────────────────────────────────── */
+
+.delay-0 { animation-delay: 0ms; }
+.delay-50 { animation-delay: 50ms; }
+.delay-100 { animation-delay: 100ms; }
+.delay-150 { animation-delay: 150ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-500 { animation-delay: 500ms; }
+
+/* ── Fill Mode Modifiers ─────────────────────────────────────────── */
+
+.fill-none { animation-fill-mode: none; }
+.fill-forwards { animation-fill-mode: forwards; }
+.fill-backwards { animation-fill-mode: backwards; }
+.fill-both { animation-fill-mode: both; }
+
+/* ── Interactive Animations ──────────────────────────────────────── */
+
+/* Hover effects */
+.hover\:scale-105:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.hover\:scale-110:hover {
+  transform: scale(1.1);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.hover\:translate-y-[-2px]:hover {
+  transform: translateY(-2px);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.hover\:translate-y-[-4px]:hover {
+  transform: translateY(-4px);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+/* Active effects */
+.active\:scale-95:active {
+  transform: scale(0.95);
+  transition: transform 0.1s cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.active\:translate-y-0:active {
+  transform: translateY(0);
+  transition: transform 0.1s cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+/* Focus effects */
+.focus\:ring-2:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--amber);
+}
+
+/* ── Loading States ──────────────────────────────────────────────── */
+
+.skeleton {
+  background: linear-gradient(90deg, 
+    var(--panel-2) 25%, 
+    var(--panel-3) 50%, 
+    var(--panel-2) 75%
+  );
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.4s linear infinite;
+  border-radius: 4px;
+}
+
+.skeleton-text {
+  height: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.skeleton-rectangular {
+  border-radius: 4px;
+}
+
+.skeleton-circular {
+  border-radius: 50%;
+}
+
+/* ── Transitions ─────────────────────────────────────────────────── */
+
+.transition-all {
+  transition-property: all;
+  transition-duration: 0.2s;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.transition-colors {
+  transition-property: color, background-color, border-color;
+  transition-duration: 0.2s;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.transition-transform {
+  transition-property: transform;
+  transition-duration: 0.2s;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.transition-opacity {
+  transition-property: opacity;
+  transition-duration: 0.2s;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+/* ── Reduced Motion Support ─────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .skeleton {
+    animation: none;
+    background: var(--panel-2);
+  }
+}
+
+/* ── Utility Animation Combinations ─────────────────────────────── */
+
+/* Staggered animations for lists */
+.stagger-in > * {
+  animation: fadeInUp 0.3s ease-out both;
+}
+
+.stagger-in > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-in > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-in > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-in > *:nth-child(4) { animation-delay: 150ms; }
+.stagger-in > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-in > *:nth-child(6) { animation-delay: 250ms; }
+.stagger-in > *:nth-child(7) { animation-delay: 300ms; }
+.stagger-in > *:nth-child(8) { animation-delay: 350ms; }
+.stagger-in > *:nth-child(9) { animation-delay: 400ms; }
+.stagger-in > *:nth-child(10) { animation-delay: 450ms; }
+
+/* Grid layout animations */
+.grid-animate-in {
+  display: grid;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.grid-animate-in > * {
+  animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+/* ── Component-Specific Animations ───────────────────────────────── */
+
+/* Vault cards */
+.vcard-enter {
+  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.vcard-hover-effect {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.vcard-hover-effect:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(14, 165, 233, 0.2);
+}
+
+/* Table rows */
+.tablerow-enter {
+  animation: row-enter 0.3s ease-out both;
+}
+
+.tablerow-hover {
+  transition: background-color 0.15s ease-out;
+}
+
+/* Buttons */
+.btn-animate {
+  transition: all 0.15s ease-out;
+}
+
+.btn-animate:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.btn-animate:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Status indicators */
+.status-dot {
+  transition: all 0.3s ease-out;
+}
+
+.status-dot.pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Modal/overlay animations */
+.modal-backdrop-animate {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content-animate {
+  animation: scaleIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Tooltip animations */
+.tooltip-animate {
+  animation: tooltip-in 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Toast notifications */
+.toast-animate-in {
+  animation: notification-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toast-animate-out {
+  animation: notification-out 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Progress bar animations */
+.progress-bar-animate {
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+/* Badge animations */
+.badge-animate {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.badge-animate:hover {
+  transform: scale(1.05);
+}
+
+/* ── Performance Optimizations ──────────────────────────────────── */
+
+/* GPU acceleration for transforms */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+/* Reduce paint during animations */
+.animate-optimized {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* ── Responsive Animation Adjustments ───────────────────────────── */
+
+/* Slower animations on mobile for better performance */
+@media (max-width: 768px) {
+  .animate-fade-in,
+  .animate-fade-in-up,
+  .animate-fade-in-down,
+  .animate-scale-in {
+    animation-duration: 0.15s;
+  }
+  
+  .transition-all,
+  .transition-colors,
+  .transition-transform {
+    transition-duration: 0.15s;
+  }
+  
+  .hover\:scale-105:hover,
+  .hover\:scale-110:hover {
+    transform: scale(1.02);
+  }
+}

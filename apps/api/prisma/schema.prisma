@@ -1,0 +1,358 @@
+// ── Trader Vaults database schema ─────────────────────────────────────────
+// THIS IS THE DEV SCHEMA. Production runs POSTGRES; SQLite below is
+// dev-only, chosen so a fresh clone runs with zero setup. The schema is
+// kept Postgres-portable on purpose: scalar types only (String/Int/
+// Float/Boolean/DateTime), no SQLite-specific attributes, no enums
+// (SQLite has none — enum-ish strings are validated at the API edge).
+//
+// Production does NOT edit this file. `scripts/prisma-prod.mjs` emits
+// apps/api/prisma/schema.prod.prisma — this file with the datasource
+// provider swapped to "postgresql" — and the build/start path targets
+// it with `--schema` (see the root `build` and `start` scripts). So:
+//   local dev   → this file, provider sqlite,     DATABASE_URL=file:./dev.db
+//   Railway/prod→ schema.prod.prisma, postgresql, DATABASE_URL=postgresql://…
+// Edit models here only; the prod twin is regenerated on every build.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL") // dev default: "file:./dev.db" (apps/api/.env)
+}
+
+model User {
+  id          String   @id @default(cuid())
+  privyId     String?  @unique
+  handle      String   @unique
+  displayName String
+  xHandle     String?
+  xVerified   Boolean  @default(false)
+  avatarUrl   String?
+  bio         String?
+  // ── the user's SELF-CUSTODIAL Solana wallet (Privy embedded) ──────
+  // Base58 pubkey, learned from a CRYPTOGRAPHICALLY VERIFIED Privy
+  // identity token (or the Privy server API) — never from a client
+  // claim, because it is the `authority` of that user's VaultDepositor
+  // PDA and therefore the on-chain owner of their shares. The server
+  // never holds the matching secret key: it only ever builds unsigned
+  // transactions naming this address as authority + fee payer.
+  walletAddress String?
+  createdAt   DateTime @default(now())
+
+  vaults           Vault[]
+  deposits         Deposit[]
+  withdrawRequests WithdrawRequest[]
+  trackedWallets   TrackedWallet[]
+  vaultDepositors  VaultDepositor[]
+  onchainDeposits  OnChainDeposit[]
+  vestedFees       VestedFee[]
+
+  @@index([walletAddress])
+}
+
+model Vault {
+  id               String   @id @default(cuid())
+  name             String
+  type             String // "managed" | "mirror"
+  // "real" = on-chain SOL only (execution blocked until the program is
+  // deployed — NEVER simulated). "paper" = the ledger sandbox engine.
+  // Existing rows predate the split and were always ledger entries, so
+  // the default correctly classifies them as paper.
+  mode             String   @default("paper") // "real" | "paper"
+  status           String   @default("active") // "active" | "frozen" | "closed"
+  traderId         String
+  trader           User     @relation(fields: [traderId], references: [id])
+  leaderWallet     String? // mirror vaults: wallet being copied
+  // ── mirror copy config (paper mirror engine) ──────────────────────
+  // null values mean "use the engine default" (fixed 0.25 SOL, max 1.0).
+  mirrorSizingMode String? // "fixed" | "proportional" (null = fixed)
+  mirrorFixedSol   Float? // fixed mode: SOL per copied buy (default 0.25)
+  mirrorMaxSol     Float? // hard per-copy cap in SOL (default 1.0)
+  mirrorLastSig    String? // dedupe cursor: newest leader sig already processed
+  mirrorSyncedAt   Int? // unix seconds of the last completed leader sync
+  createdAt        DateTime @default(now())
+  tvlSol           Float    @default(0)
+  sharePriceSol    Float    @default(1)
+  totalShares      Float    @default(0)
+  managerStakeSol  Float    @default(0)
+  perfFeeBps       Int      @default(2000)
+  redeemWindowHours Int     @default(24)
+  solBufferSol     Float    @default(0)
+  thesis           String?
+  // fees crystallized on exits, accrued OUTSIDE tvl (owed, not equity).
+  // The trader's performance fee splits two ways: two thirds paid at
+  // once (traderFeesAccruedSol) and one third routed to the escrow
+  // wallet for 60 days (vestedFeesAccruedSol, mirrored row-by-row in
+  // VestedFee below). BOTH belong to the trader.
+  traderFeesAccruedSol   Float @default(0)
+  vestedFeesAccruedSol   Float @default(0)
+  // DEPRECATED — the 10-point platform cut no longer exists; those points
+  // are now the trader's vested share. NOTHING increments this column.
+  // It is retained, not dropped, only so the historical amounts charged
+  // under the old 70/20/10 rule are not silently rewritten. It is no
+  // longer exposed by the API and must never be presented as a live fee.
+  platformFeesAccruedSol Float @default(0)
+
+  // ── on-chain link (mode = "real" only) ────────────────────────────
+  // Set when init_vault lands on the deployed program. The PDA is
+  // derived from ["vault", <32-byte name>] where the name is this row's
+  // id, so it is re-derivable and never has to be trusted from the DB;
+  // it is stored anyway so reads and explorer links cost no derivation.
+  // null on a real vault = the row exists but nothing is on-chain yet
+  // (server keypair unavailable at creation time).
+  onchainVaultPda  String? @unique
+  onchainInitSig   String?
+
+  equityPoints     EquityPoint[]
+  positions        Position[]
+  trades           Trade[]
+  deposits         Deposit[]
+  withdrawRequests WithdrawRequest[]
+  trackedWallets   TrackedWallet[]
+  orders           Order[]
+  dcaOrders        DcaOrder[]
+  vaultDepositors  VaultDepositor[]
+  onchainDeposits  OnChainDeposit[]
+  vestedFees       VestedFee[]
+
+  @@index([traderId])
+  @@index([type, status])
+  @@index([mode])
+}
+
+// One escrowed tranche of a trader's performance fee. Created every time
+// profit crystallizes: the immediate two thirds credit the vault's
+// traderFeesAccruedSol, the remaining third lands here, locked for
+// VEST_LOCK_SECONDS (60 days) from the moment it crystallized.
+//
+// STATUS IS A FUNCTION OF TIME, not of a scheduler. "locked" becomes
+// "claimable" the instant `unlocksAt <= now`; the API computes that on
+// read and persists the flip opportunistically, so a stopped cron can
+// never strand a trader's money. Only "claimed" is a real state change.
+//
+// NOTE (devnet): amountSol is bookkeeping. `escrowWallet` records the
+// destination the tranche is booked against; no lamports move for paper
+// vaults, and claimSig stays null until a real transfer backs a claim.
+model VestedFee {
+  id             String  @id @default(cuid())
+  vaultId        String
+  vault          Vault   @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  traderId       String
+  trader         User    @relation(fields: [traderId], references: [id])
+  amountSol      Float
+  crystallizedAt Int // unix seconds
+  unlocksAt      Int // unix seconds — crystallizedAt + 60 days
+  status         String  @default("locked") // "locked" | "claimable" | "claimed"
+  claimedAt      Int? // unix seconds, set when status flips to "claimed"
+  claimSig       String? // on-chain transfer backing the claim, when there is one
+  /** escrow pubkey this tranche is booked against (FEE_ESCROW_WALLET) */
+  escrowWallet   String?
+
+  @@index([traderId, status])
+  @@index([vaultId])
+  @@index([unlocksAt])
+}
+
+model EquityPoint {
+  id      String @id @default(cuid())
+  vaultId String
+  vault   Vault  @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  t       Int // unix seconds
+  v       Float // SHARE PRICE in SOL (not vault equity — renamed in
+  // meaning during the per-share fix; equity rises on deposits, which is
+  // not performance. The column name was left alone to avoid a migration.)
+
+  @@unique([vaultId, t])
+  @@index([vaultId, t])
+}
+
+model Position {
+  id           String   @id @default(cuid())
+  vaultId      String
+  vault        Vault    @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  mint         String
+  symbol       String
+  name         String?
+  amountTokens Float
+  costSol      Float
+  valueSol     Float
+  markStale    Boolean  @default(false)
+  updatedAt    DateTime @updatedAt
+
+  @@unique([vaultId, mint])
+  @@index([vaultId])
+}
+
+model Trade {
+  id           String @id @default(cuid())
+  vaultId      String
+  vault        Vault  @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  ts           Int // unix seconds
+  side         String // "buy" | "sell"
+  mint         String
+  symbol       String
+  solAmount    Float
+  tokenAmount  Float
+  priceSol     Float
+  txSig        String @unique
+  source       String // "managed" | "mirror"
+  copyLagSlots Int? // mirror trades: landed slot − leader slot
+
+  @@index([vaultId, ts])
+  @@index([mint])
+}
+
+model Order {
+  id              String  @id @default(cuid())
+  vaultId         String
+  vault           Vault   @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  mint            String
+  symbol          String
+  kind            String // "take_profit" | "stop_loss" | "limit_buy_dip" | "limit_buy_breakout"
+  triggerPriceUsd Float // trigger on last-trade USD price
+  amountSol       Float? // buys: SOL to spend
+  sellFraction    Float? // sells: fraction of position 0-1
+  status          String  @default("open") // "open" | "filled" | "cancelled" | "failed"
+  createdAt       Int // unix seconds
+  filledAt        Int? // unix seconds
+  filledTradeId   String?
+  failReason      String?
+
+  @@index([status])
+  @@index([vaultId, status])
+}
+
+model DcaOrder {
+  id              String  @id @default(cuid())
+  vaultId         String
+  vault           Vault   @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  mint            String
+  symbol          String
+  amountSolPerLeg Float // SOL spent per leg
+  intervalSec     Int // seconds between legs (min 60)
+  legsTotal       Int // 1-96
+  legsDone        Int     @default(0)
+  nextLegAt       Int // unix seconds — engine fires when <= now
+  status          String  @default("active") // "active" | "done" | "cancelled" | "failed"
+  createdAt       Int // unix seconds
+  lastTradeId     String?
+  failReason      String?
+
+  @@index([status])
+}
+
+model Deposit {
+  id        String   @id @default(cuid())
+  vaultId   String
+  vault     Vault    @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  shares    Float
+  costSol   Float
+  createdAt DateTime @default(now())
+
+  @@index([vaultId])
+  @@index([userId])
+}
+
+// Per-(vault, depositor) position ledger — the paper twin of the Anchor
+// program's VaultDepositor PDA. Fees crystallize per-portion on exit:
+// profit = gross − proportional cost basis, split 70/30 (depositor keeps
+// 70%; the trader's 30% is two thirds cash, one third 60-day escrow).
+model VaultDepositor {
+  id       String @id @default(cuid())
+  vaultId  String
+  vault    Vault  @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+  shares   Float  @default(0)
+  /** remaining cost basis of the held shares (SOL) */
+  costSol  Float  @default(0)
+  /** lifetime profit share already paid to the trader from this depositor */
+  cumulativeTraderFeeSol Float @default(0)
+
+  @@unique([vaultId, userId])
+  @@index([userId])
+}
+
+// A REAL, user-signed on-chain deposit. This table is an INDEX of
+// confirmed transactions, never a balance: the authority's shares live in
+// the VaultDepositor PDA and are always read back from the chain. A row
+// only ever appears after /api/onchain/deposit/confirm has fetched the
+// transaction from the cluster and verified that it succeeded, ran OUR
+// program, and touched this vault's PDA — a client-reported signature is
+// never trusted on its own.
+//
+// u64 / u128 chain quantities are stored as decimal STRINGS: shares are
+// u128 (Float would silently lose precision, and neither SQLite nor
+// Postgres has a 128-bit integer), and the schema is scalar-only for
+// Postgres portability.
+model OnChainDeposit {
+  id             String   @id @default(cuid())
+  vaultId        String
+  vault          Vault    @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  /** the transaction signature — the idempotency key for confirm */
+  signature      String   @unique
+  slot           Int?
+  /** base58 pubkey that signed as `authority` (the user's own wallet) */
+  authority      String
+  vaultPda       String
+  depositorPda   String
+  amountLamports String
+  /** shares the chain minted, from the program's Deposited event */
+  sharesMinted   String
+  /** the depositor's total shares AFTER this deposit, re-read on-chain */
+  sharesAfter    String
+  /** true when this transaction also created the VaultDepositor PDA */
+  initDepositor  Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  @@index([vaultId])
+  @@index([userId])
+  @@index([authority])
+}
+
+model WithdrawRequest {
+  id                String @id @default(cuid())
+  vaultId           String
+  vault             Vault  @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User   @relation(fields: [userId], references: [id])
+  shares            Float
+  valueAtRequestSol Float
+  requestedAt       Int // unix seconds
+  executableAt      Int // unix seconds (requestedAt + redeem window unless instant)
+  status            String @default("pending") // "pending" | "executable" | "paid" | "cancelled"
+  paidAt            Int? // unix seconds, set when status flips to "paid"
+
+  @@index([vaultId, status])
+  @@index([userId, status])
+}
+
+model TrackedWallet {
+  id            String  @id @default(cuid())
+  userId        String
+  user          User    @relation(fields: [userId], references: [id])
+  address       String
+  label         String?
+  winRatePct    Float   @default(0)
+  pnlSol        Float   @default(0)
+  trades        Int     @default(0)
+  profitFactor  Float?
+  lastActiveAt  Int // unix seconds
+  isVaultLeader Boolean @default(false)
+  vaultId       String?
+  vault         Vault?  @relation(fields: [vaultId], references: [id])
+  // real chain scan state (null = never scanned; seeded placeholder stats
+  // survive only until the first real scan overwrites them)
+  scannedAt      Int? // unix seconds of last completed scan
+  scanStatus     String? // "ok" | "partial"
+  recentSwapsJson String? // JSON WalletSwap[] from the last scan
+
+  @@unique([userId, address])
+  @@index([userId])
+}

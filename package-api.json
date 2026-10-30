@@ -1,0 +1,14 @@
+{
+  "name": "trader-vaults-api",
+  "version": "0.1.0",
+  "description": "Trader Vaults vault API for Railway deployment",
+  "main": "apps/api/src/index.ts",
+  "scripts": {
+    "start": "node --import tsx apps/api/src/index.ts",
+    "build": "npm run build --workspaces --if-present"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "tsx": "^4.0.0"
+  }
+}

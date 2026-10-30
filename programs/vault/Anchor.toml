@@ -1,0 +1,28 @@
+[toolchain]
+# Pin the Anchor version this source was written against. Build in WSL/CI (see README.md).
+anchor_version = "0.30.1"
+
+[features]
+resolution = true
+skip-lint = false
+
+# The real program id, matching declare_id! in programs/vault/src/lib.rs and
+# PROGRAM_ID.txt. It used to be Anchor's placeholder here while the other two
+# said HWssGCcx… — and lib.rs's own comment warns that a program-id mismatch
+# fails at RUNTIME, not at build time. scripts/checks/program-id.mjs asserts
+# all three agree.
+[programs.localnet]
+vault = "HWssGCcxUdiqeEiWk3CRxuSJy6eb4aZH7g2ubo7w6Sqc"
+
+[programs.mainnet]
+vault = "HWssGCcxUdiqeEiWk3CRxuSJy6eb4aZH7g2ubo7w6Sqc"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "Localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

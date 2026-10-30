@@ -1,0 +1,25 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+*.local
+apps/api/prisma/dev.db
+apps/api/prisma/dev.db-journal
+# generated on every build by scripts/prisma-prod.mjs — never hand-edited
+apps/api/prisma/schema.prod.prisma
+.DS_Store
+target/
+.anchor/
+test-ledger/
+
+# ── key material: NEVER commit ──────────────────────────────────────
+.keys/
+*keypair*.json
+**/target/deploy/*.json
+.config/solana/
+
+# Environment files (keep examples only)
+.env*
+!.env*.example
+!.env.example

@@ -1,0 +1,39 @@
+{
+  "name": "@trader-vaults/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview",
+    "analyze": "vite-bundle-visualizer",
+    "build:analyze": "tsc --noEmit && vite build --mode production && npx vite-bundle-visualizer"
+  },
+  "dependencies": {
+    "@trader-vaults/shared": "*",
+    "@privy-io/react-auth": "^2.13.0",
+    "@solana-program/system": "^0.7.0",
+    "@solana-program/token": "^0.5.1",
+    "@solana/kit": "^2.3.0",
+    "@solana/spl-token": "^0.4.15",
+    "@solana/web3.js": "^1.98.4",
+    "buffer": "^6.0.3",
+    "lightweight-charts": "^4.2.0",
+    "qrcode": "^1.5.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0"
+  },
+  "devDependencies": {
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "terser": "^5.36.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.3",
+    "vite-bundle-visualizer": "^1.0.0"
+  }
+}

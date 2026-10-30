@@ -1,0 +1,27 @@
+{
+  "name": "trader-vaults",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Trader vaults on Solana \u2014 traders trade pooled capital they can never withdraw.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,green \"npm run dev -w apps/api\" \"npm run dev -w apps/web\"",
+    "dev:api": "npm run dev -w apps/api",
+    "dev:web": "npm run dev -w apps/web",
+    "db:setup": "npm run db:push -w apps/api && npm run db:seed -w apps/api",
+    "build": "node scripts/prisma-prod.mjs generate && npm run build -w apps/api --if-present && npm run build -w apps/web",
+    "build:prod": "npm install && node scripts/prisma-prod.mjs generate && npm run build -w apps/api",
+    "start": "node scripts/prisma-prod.mjs push && tsx apps/api/src/index.ts",
+    "start:prod": "cd apps/api && node dist/index.js",
+    "prisma:prod:emit": "node scripts/prisma-prod.mjs emit",
+    "prisma:prod:validate": "node scripts/prisma-prod.mjs validate",
+    "db:generate:dev": "npm run db:generate -w apps/api",
+    "typecheck": "npm run typecheck -w apps/api && npm run typecheck -w apps/web"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

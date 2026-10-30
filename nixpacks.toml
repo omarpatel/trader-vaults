@@ -1,0 +1,21 @@
+# ── Railway / Nixpacks build plan — single service ─────────────────
+# One container runs everything: `npm run build` compiles the web app
+# and the Postgres Prisma client, `npm run start` pushes the schema and
+# starts the Express API, which also serves apps/web/dist.
+#
+# Node version comes from `engines.node` in package.json (24.x). Override
+# with the NIXPACKS_NODE_VERSION service variable if that ever needs to
+# move without a code change.
+
+[phases.install]
+# --include=dev is load-bearing. tsx (the runtime), prisma (the CLI),
+# vite and typescript all live in devDependencies, and Railway services
+# usually set NODE_ENV=production — under which a bare `npm ci` omits
+# devDependencies and the build dies on "vite: not found".
+cmds = ["npm ci --include=dev"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm run start"

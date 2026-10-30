@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: API + web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Generate Prisma client
+        run: npm run db:generate:dev
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      - name: Program id consistency
+        run: node scripts/checks/program-id.mjs
+
+  program:
+    name: Vault program (cargo test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: programs/vault
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: programs/vault
+      - name: Unit tests
+        run: cargo test --locked

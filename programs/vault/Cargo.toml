@@ -1,0 +1,19 @@
+# Anchor workspace manifest for the Trader Vaults vault program.
+# The actual program crate lives in programs/vault.
+
+[workspace]
+members = ["programs/*"]
+resolver = "2"
+
+[profile.release]
+# overflow-checks stays ON in release builds: every arithmetic op that is not
+# already explicit checked_* math will still panic instead of wrapping.
+# This is an audit requirement, not an optimization preference.
+overflow-checks = true
+lto = "fat"
+codegen-units = 1
+
+[profile.release.build-override]
+opt-level = 3
+incremental = false
+codegen-units = 1
