@@ -9,9 +9,9 @@
     "typecheck": "tsc --noEmit",
     "build": "tsc",
     "start": "node dist/index.js",
-    "db:push": "prisma db push",
+    "db:push": "tsx scripts/prisma.ts db push",
     "db:seed": "tsx src/seed.ts",
-    "db:generate": "prisma generate",
+    "db:generate": "tsx scripts/prisma.ts generate",
     "analyze": "node --inspect node_modules/.bin/tsx src/index.ts",
     "profile": "node --prof --no-log-file-per-isolate --log-dir=v8-logs node_modules/.bin/tsx src/index.ts"
   },
